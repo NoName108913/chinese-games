@@ -1,18 +1,8 @@
 {
   "version": 2,
   "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "/api/index.js?action=$1"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/public/$1"
-    }
-  ],
-  "functions": {
-    "api/index.js": {
-      "maxDuration": 30
-    }
-  }
+    { "handle": "filesystem" },
+    { "src": "/api/(.*)", "dest": "/api/index.js" },
+    { "src": "/(.*)", "dest": "/public/index.html" }
+  ]
 }
