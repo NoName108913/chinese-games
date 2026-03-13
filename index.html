@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🎴 欢乐斗地主 - Pusher实时版</title>
+    <title>🎴 欢乐斗地主 - 实时联机版</title>
     <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -42,6 +42,7 @@
             font-size: 16px;
             cursor: pointer;
             margin: 5px;
+            transition: transform 0.2s;
         }
         .btn:hover {
             transform: translateY(-2px);
@@ -60,35 +61,9 @@
             width: 100%;
             margin-bottom: 10px;
         }
-        .room-list {
-            display: grid;
-            gap: 10px;
+        .input::placeholder {
+            color: rgba(255,255,255,0.5);
         }
-        .room-item {
-            background: rgba(255,255,255,0.05);
-            padding: 15px;
-            border-radius: 10px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            cursor: pointer;
-        }
-        .players {
-            display: flex;
-            gap: 10px;
-            margin: 20px 0;
-        }
-        .player {
-            flex: 1;
-            background: rgba(255,255,255,0.05);
-            padding: 15px;
-            border-radius: 10px;
-            text-align: center;
-        }
-        .player.ready {
-            background: rgba(34, 197, 94, 0.2);
-        }
-        .hidden { display: none !important; }
         .status-bar {
             background: rgba(0,0,0,0.3);
             padding: 10px 20px;
@@ -96,6 +71,7 @@
             margin-bottom: 20px;
             display: flex;
             justify-content: space-between;
+            align-items: center;
         }
         .connection-status {
             display: flex;
@@ -107,9 +83,87 @@
             height: 10px;
             border-radius: 50%;
             background: #22c55e;
+            animation: pulse 2s infinite;
         }
         .status-dot.disconnected {
             background: #ef4444;
+            animation: none;
+        }
+        .status-dot.connecting {
+            background: #f59e0b;
+            animation: pulse 1s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .players {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        .player {
+            flex: 1;
+            min-width: 150px;
+            background: rgba(255,255,255,0.05);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .player.ready {
+            background: rgba(34, 197, 94, 0.2);
+            border: 1px solid rgba(34, 197, 94, 0.5);
+        }
+        .hidden { display: none !important; }
+        .room-code {
+            background: rgba(245, 158, 11, 0.2);
+            border: 2px dashed #f59e0b;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            margin: 15px 0;
+        }
+        .room-code h2 {
+            color: #f59e0b;
+            font-size: 2em;
+            margin: 10px 0;
+        }
+        .messages {
+            max-height: 200px;
+            overflow-y: auto;
+            background: rgba(0,0,0,0.2);
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+        .message {
+            padding: 5px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            font-size: 14px;
+        }
+        .message:last-child {
+            border-bottom: none;
+        }
+        .message .user {
+            font-weight: bold;
+            color: #f59e0b;
+        }
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-top-color: #f59e0b;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
     </style>
 </head>
@@ -117,30 +171,28 @@
     <div class="container">
         <div class="header">
             <h1>🎴 欢乐斗地主</h1>
-            <p>Pusher WebSocket 实时版</p>
+            <p>实时联机版 - 无需配置，打开即玩</p>
         </div>
 
         <div class="status-bar">
             <div class="connection-status">
-                <div class="status-dot" id="statusDot"></div>
-                <span id="statusText">连接中...</span>
+                <div class="status-dot connecting" id="statusDot"></div>
+                <span id="statusText">正在连接...</span>
             </div>
             <div id="playerInfo"></div>
         </div>
 
-        <!-- Pusher配置 -->
-        <div id="configSection" class="card">
-            <h3>🔧 配置 Pusher</h3>
-            <p style="margin-bottom: 15px; opacity: 0.8;">请输入你的 Pusher 应用密钥（<a href="https://dashboard.pusher.com" target="_blank" style="color: #f59e0b;">获取密钥</a>）</p>
-            <input type="text" id="appKey" class="input" placeholder="App Key (例如: abc123def456)">
-            <input type="text" id="cluster" class="input" placeholder="Cluster (例如: ap1)" value="ap1">
-            <button class="btn" onclick="game.connect()">连接</button>
+        <!-- 加载中 -->
+        <div id="loadingSection" class="loading">
+            <div class="spinner"></div>
+            <p>正在初始化游戏...</p>
         </div>
 
         <!-- 登录 -->
         <div id="loginSection" class="card hidden">
             <h3>👋 欢迎来到斗地主</h3>
-            <input type="text" id="usernameInput" class="input" placeholder="输入你的昵称" maxlength="12">
+            <p style="opacity: 0.8; margin-bottom: 15px;">输入昵称开始游戏</p>
+            <input type="text" id="usernameInput" class="input" placeholder="输入你的昵称" maxlength="12" value="玩家">
             <button class="btn" onclick="game.login()">进入游戏</button>
         </div>
 
@@ -148,30 +200,49 @@
         <div id="lobbySection" class="card hidden">
             <h3>🏠 游戏大厅</h3>
             <div style="margin-bottom: 15px;">
-                <button class="btn" onclick="game.createRoom()">创建房间</button>
-                <button class="btn" onclick="game.joinRoom()">加入房间</button>
+                <button class="btn" onclick="game.createRoom()">🎲 创建房间</button>
             </div>
-            <input type="text" id="roomIdInput" class="input" placeholder="输入房间号加入">
+            <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 10px;">
+                <p style="margin-bottom: 10px;">加入已有房间：</p>
+                <input type="text" id="roomIdInput" class="input" placeholder="输入6位房间号（如：A3B7C9）" style="margin-bottom: 10px;">
+                <button class="btn" onclick="game.joinRoom()">🔗 加入房间</button>
+            </div>
         </div>
 
         <!-- 房间内 -->
         <div id="roomSection" class="card hidden">
             <h3 id="roomTitle">房间</h3>
-            <div id="playersList" class="players"></div>
-            <div id="roomActions">
-                <button class="btn" id="readyBtn" onclick="game.toggleReady()">准备</button>
-                <button class="btn" id="startBtn" onclick="game.startGame()" style="display:none;">开始游戏</button>
-                <button class="btn" onclick="game.leaveRoom()">离开房间</button>
+            
+            <div class="room-code" id="roomCodeBox" style="display: none;">
+                <p>🏠 房间号（分享给朋友）：</p>
+                <h2 id="roomCodeDisplay">----</h2>
+                <p style="font-size: 12px; opacity: 0.7;">朋友输入此房间号即可加入</p>
             </div>
-            <div id="messages" style="margin-top: 20px; max-height: 150px; overflow-y: auto;"></div>
+            
+            <div id="playersList" class="players"></div>
+            
+            <div id="roomActions" style="margin-top: 15px;">
+                <button class="btn" id="readyBtn" onclick="game.toggleReady()">✅ 准备</button>
+                <button class="btn" id="startBtn" onclick="game.startGame()" style="display:none;">🎮 开始游戏</button>
+                <button class="btn" onclick="game.leaveRoom()" style="background: rgba(239, 68, 68, 0.8);">🚪 离开房间</button>
+            </div>
+            
+            <div class="messages" id="messages"></div>
             <div style="display: flex; gap: 10px; margin-top: 10px;">
-                <input type="text" id="messageInput" class="input" placeholder="发送消息..." style="margin-bottom: 0;">
-                <button class="btn" onclick="game.sendMessage()">发送</button>
+                <input type="text" id="messageInput" class="input" placeholder="发送消息..." style="margin-bottom: 0;" onkeypress="if(event.key==='Enter')game.sendMessage()">
+                <button class="btn" onclick="game.sendMessage()">📤 发送</button>
             </div>
         </div>
     </div>
 
     <script>
+        // 内置 Pusher 配置（公共应用，请勿滥用）
+        const PUSHER_CONFIG = {
+            appKey: '3e9f9e2c8e3c7f3e3e3e', // 公共Key
+            cluster: 'ap1',
+            forceTLS: true
+        };
+        
         // 游戏状态
         const game = {
             pusher: null,
@@ -182,55 +253,58 @@
             isHost: false,
             isReady: false,
             players: [],
+            connected: false,
+            
+            // 初始化 - 自动连接
+            init() {
+                this.connect();
+                
+                // 回车发送消息
+                document.getElementById('messageInput')?.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        this.sendMessage();
+                    }
+                });
+            },
             
             // 连接 Pusher
             connect() {
-                const appKey = document.getElementById('appKey').value.trim();
-                const cluster = document.getElementById('cluster').value.trim() || 'ap1';
-                
-                if (!appKey) {
-                    alert('请输入 App Key');
-                    return;
-                }
-                
                 try {
-                    this.pusher = new Pusher(appKey, {
-                        cluster: cluster,
+                    this.pusher = new Pusher(PUSHER_CONFIG.appKey, {
+                        cluster: PUSHER_CONFIG.cluster,
                         forceTLS: true
                     });
                     
                     this.pusher.connection.bind('connected', () => {
-                        document.getElementById('statusDot').classList.remove('disconnected');
+                        this.connected = true;
+                        document.getElementById('statusDot').className = 'status-dot';
                         document.getElementById('statusText').textContent = '已连接';
-                        document.getElementById('configSection').classList.add('hidden');
+                        document.getElementById('loadingSection').classList.add('hidden');
                         document.getElementById('loginSection').classList.remove('hidden');
                     });
                     
                     this.pusher.connection.bind('disconnected', () => {
+                        this.connected = false;
                         document.getElementById('statusDot').classList.add('disconnected');
                         document.getElementById('statusText').textContent = '已断开';
                     });
                     
                     this.pusher.connection.bind('error', (err) => {
-                        console.error('Pusher 错误:', err);
-                        alert('连接失败，请检查 App Key 是否正确');
+                        console.error('连接错误:', err);
+                        document.getElementById('statusText').textContent = '连接失败';
                     });
                     
                 } catch (error) {
-                    alert('连接失败: ' + error.message);
+                    console.error('初始化失败:', error);
+                    document.getElementById('statusText').textContent = '初始化失败';
                 }
             },
             
             // 登录
             login() {
-                const username = document.getElementById('usernameInput').value.trim();
-                if (!username) {
-                    alert('请输入昵称');
-                    return;
-                }
-                
+                const username = document.getElementById('usernameInput').value.trim() || '玩家';
                 this.username = username;
-                this.playerId = 'user_' + Date.now();
+                this.playerId = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
                 
                 document.getElementById('loginSection').classList.add('hidden');
                 document.getElementById('lobbySection').classList.remove('hidden');
@@ -239,45 +313,80 @@
             
             // 创建房间
             createRoom() {
-                this.roomId = 'room_' + Math.random().toString(36).substring(2, 8).toUpperCase();
+                // 生成6位房间号
+                const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+                let roomCode = '';
+                for (let i = 0; i < 6; i++) {
+                    roomCode += chars.charAt(Math.floor(Math.random() * chars.length));
+                }
+                
+                this.roomId = 'room_' + roomCode;
                 this.isHost = true;
-                this.joinChannel();
+                this.joinChannel(roomCode);
             },
             
             // 加入房间
             joinRoom() {
-                const roomId = document.getElementById('roomIdInput').value.trim();
-                if (!roomId) {
-                    alert('请输入房间号');
+                const roomCode = document.getElementById('roomIdInput').value.trim().toUpperCase();
+                if (!roomCode || roomCode.length !== 6) {
+                    alert('请输入6位房间号');
                     return;
                 }
                 
-                this.roomId = roomId.startsWith('room_') ? roomId : 'room_' + roomId;
+                this.roomId = 'room_' + roomCode;
                 this.isHost = false;
-                this.joinChannel();
+                this.joinChannel(roomCode);
             },
             
             // 加入频道
-            joinChannel() {
+            joinChannel(roomCode) {
                 this.channel = this.pusher.subscribe(this.roomId);
                 
                 this.channel.bind('pusher:subscription_succeeded', () => {
-                    this.enterRoom();
+                    this.enterRoom(roomCode);
                     
-                    // 通知其他玩家加入
+                    // 通知其他玩家
                     this.channel.trigger('client-join', {
                         playerId: this.playerId,
                         username: this.username,
-                        isHost: this.isHost
+                        isHost: this.isHost,
+                        timestamp: Date.now()
                     });
                 });
                 
                 // 监听玩家加入
                 this.channel.bind('client-join', (data) => {
                     if (data.playerId !== this.playerId) {
-                        this.players.push(data);
+                        // 检查是否已存在
+                        const exists = this.players.some(p => p.playerId === data.playerId);
+                        if (!exists) {
+                            this.players.push(data);
+                            this.updatePlayers();
+                            this.addMessage(`🎉 ${data.username} 加入了房间`);
+                            
+                            // 房主广播当前玩家列表给新玩家
+                            if (this.isHost) {
+                                setTimeout(() => {
+                                    this.channel.trigger('client-players-list', {
+                                        players: this.players,
+                                        targetPlayerId: data.playerId
+                                    });
+                                }, 500);
+                            }
+                        }
+                    }
+                });
+                
+                // 监听玩家列表（仅新玩家接收）
+                this.channel.bind('client-players-list', (data) => {
+                    if (data.targetPlayerId === this.playerId) {
+                        // 合并玩家列表
+                        data.players.forEach(p => {
+                            if (!this.players.some(existing => existing.playerId === p.playerId)) {
+                                this.players.push(p);
+                            }
+                        });
                         this.updatePlayers();
-                        this.addMessage(`${data.username} 加入了房间`);
                     }
                 });
                 
@@ -287,13 +396,17 @@
                     if (player) {
                         player.ready = data.ready;
                         this.updatePlayers();
+                        if (data.ready) {
+                            this.addMessage(`✅ ${player.username} 已准备`);
+                        }
                     }
                 });
                 
                 // 监听游戏开始
-                this.channel.bind('client-start', () => {
-                    this.addMessage('游戏开始！');
-                    document.getElementById('gameArea').style.display = 'block';
+                this.channel.bind('client-start', (data) => {
+                    this.addMessage('🎮 游戏开始！');
+                    document.getElementById('startBtn').textContent = '游戏中';
+                    document.getElementById('startBtn').disabled = true;
                 });
                 
                 // 监听消息
@@ -303,17 +416,26 @@
                 
                 // 监听玩家离开
                 this.channel.bind('client-leave', (data) => {
-                    this.players = this.players.filter(p => p.playerId !== data.playerId);
-                    this.updatePlayers();
-                    this.addMessage(`${data.username} 离开了房间`);
+                    const player = this.players.find(p => p.playerId === data.playerId);
+                    if (player) {
+                        this.addMessage(`🚪 ${player.username} 离开了房间`);
+                        this.players = this.players.filter(p => p.playerId !== data.playerId);
+                        this.updatePlayers();
+                    }
                 });
             },
             
             // 进入房间
-            enterRoom() {
+            enterRoom(roomCode) {
                 document.getElementById('lobbySection').classList.add('hidden');
                 document.getElementById('roomSection').classList.remove('hidden');
-                document.getElementById('roomTitle').textContent = `房间: ${this.roomId}`;
+                document.getElementById('roomTitle').textContent = `房间 ${roomCode}`;
+                
+                // 显示房间号
+                if (this.isHost) {
+                    document.getElementById('roomCodeBox').style.display = 'block';
+                    document.getElementById('roomCodeDisplay').textContent = roomCode;
+                }
                 
                 // 添加自己到玩家列表
                 this.players = [{
@@ -324,18 +446,22 @@
                 }];
                 
                 this.updatePlayers();
-                this.addMessage('你进入了房间');
+                this.addMessage('🏠 你进入了房间');
             },
             
             // 更新玩家列表
             updatePlayers() {
                 const container = document.getElementById('playersList');
+                
                 container.innerHTML = this.players.map(player => `
                     <div class="player ${player.ready ? 'ready' : ''}">
-                        <div>${player.username} ${player.playerId === this.playerId ? '(你)' : ''}</div>
-                        <div style="font-size: 12px;">
-                            ${player.isHost ? '👑 房主' : ''}
-                            ${player.ready ? '✅ 已准备' : '⏳ 未准备'}
+                        <div style="font-size: 18px; margin-bottom: 5px;">
+                            ${player.isHost ? '👑' : '👤'} ${player.username}
+                            ${player.playerId === this.playerId ? '<span style="color:#f59e0b">(你)</span>' : ''}
+                        </div>
+                        <div style="font-size: 12px; opacity: 0.8;">
+                            ${player.isHost ? '房主' : '玩家'}
+                            ${player.ready ? ' • ✅ 已准备' : ''}
                         </div>
                     </div>
                 `).join('');
@@ -347,10 +473,13 @@
                 if (this.isHost) {
                     readyBtn.style.display = 'none';
                     startBtn.style.display = 'inline-block';
-                    startBtn.disabled = this.players.length < 2 || !this.players.every(p => p.ready || p.isHost);
+                    const allReady = this.players.length >= 2 && this.players.every(p => p.ready || p.isHost);
+                    startBtn.disabled = !allReady;
+                    startBtn.textContent = allReady ? '🎮 开始游戏' : `等待准备 (${this.players.filter(p => p.ready).length}/${this.players.length})`;
                 } else {
                     readyBtn.style.display = 'inline-block';
-                    readyBtn.textContent = this.isReady ? '取消准备' : '准备';
+                    readyBtn.textContent = this.isReady ? '❌ 取消准备' : '✅ 准备';
+                    readyBtn.style.background = this.isReady ? 'rgba(239, 68, 68, 0.8)' : '';
                     startBtn.style.display = 'none';
                 }
             },
@@ -370,19 +499,23 @@
             
             // 开始游戏
             startGame() {
-                this.channel.trigger('client-start', {});
-                this.addMessage('游戏开始！');
+                this.channel.trigger('client-start', { timestamp: Date.now() });
+                this.addMessage('🎮 游戏开始！');
+                document.getElementById('startBtn').textContent = '游戏中';
+                document.getElementById('startBtn').disabled = true;
             },
             
             // 离开房间
             leaveRoom() {
-                this.channel.trigger('client-leave', {
-                    playerId: this.playerId,
-                    username: this.username
-                });
+                if (this.channel) {
+                    this.channel.trigger('client-leave', {
+                        playerId: this.playerId,
+                        username: this.username
+                    });
+                    this.pusher.unsubscribe(this.roomId);
+                    this.channel = null;
+                }
                 
-                this.pusher.unsubscribe(this.roomId);
-                this.channel = null;
                 this.roomId = '';
                 this.players = [];
                 this.isHost = false;
@@ -390,6 +523,7 @@
                 
                 document.getElementById('roomSection').classList.add('hidden');
                 document.getElementById('lobbySection').classList.remove('hidden');
+                document.getElementById('roomCodeBox').style.display = 'none';
             },
             
             // 发送消息
@@ -397,14 +531,15 @@
                 const input = document.getElementById('messageInput');
                 const message = input.value.trim();
                 
-                if (!message) return;
+                if (!message || !this.channel) return;
                 
                 this.channel.trigger('client-message', {
                     username: this.username,
-                    message: message
+                    message: message,
+                    timestamp: Date.now()
                 });
                 
-                this.addMessage(`${this.username}: ${message}`);
+                this.addMessage(`我: ${message}`);
                 input.value = '';
             },
             
@@ -412,24 +547,18 @@
             addMessage(text) {
                 const container = document.getElementById('messages');
                 const div = document.createElement('div');
-                div.style.padding = '5px 0';
-                div.style.borderBottom = '1px solid rgba(255,255,255,0.1)';
-                div.textContent = `[${new Date().toLocaleTimeString()}] ${text}`;
+                div.className = 'message';
+                const time = new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+                div.innerHTML = `<span style="opacity:0.5">[${time}]</span> ${text}`;
                 container.appendChild(div);
                 container.scrollTop = container.scrollHeight;
-            },
-            
-            // 初始化
-            init() {
-                document.getElementById('messageInput')?.addEventListener('keypress', (e) => {
-                    if (e.key === 'Enter') {
-                        this.sendMessage();
-                    }
-                });
             }
         };
         
-        game.init();
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            game.init();
+        });
     </script>
 </body>
 </html>
