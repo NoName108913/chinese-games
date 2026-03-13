@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎴 欢乐斗地主 - Pusher实时版</title>
+    <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a5f1a 0%, #0d3d0d 100%);
+            min-height: 100vh;
+            color: #fff;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            text-align: center;
+            padding: 20px 0;
+        }
+        .header h1 {
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+        .card {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .btn {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        .btn:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+        .input {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: white;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 16px;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+        .room-list {
+            display: grid;
+            gap: 10px;
+        }
+        .room-item {
+            background: rgba(255,255,255,0.05);
+            padding: 15px;
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+        }
+        .players {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        .player {
+            flex: 1;
+            background: rgba(255,255,255,0.05);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .player.ready {
+            background: rgba(34, 197, 94, 0.2);
+        }
+        .hidden { display: none !important; }
+        .status-bar {
+            background: rgba(0,0,0,0.3);
+            padding: 10px 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .connection-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #22c55e;
+        }
+        .status-dot.disconnected {
+            background: #ef4444;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎴 欢乐斗地主</h1>
+            <p>Pusher WebSocket 实时版</p>
+        </div>
+
+        <div class="status-bar">
+            <div class="connection-status">
+                <div class="status-dot" id="statusDot"></div>
+                <span id="statusText">连接中...</span>
+            </div>
+            <div id="playerInfo"></div>
+        </div>
+
+        <!-- Pusher配置 -->
+        <div id="configSection" class="card">
+            <h3>🔧 配置 Pusher</h3>
+            <p style="margin-bottom: 15px; opacity: 0.8;">请输入你的 Pusher 应用密钥（<a href="https://dashboard.pusher.com" target="_blank" style="color: #f59e0b;">获取密钥</a>）</p>
+            <input type="text" id="appKey" class="input" placeholder="App Key (例如: abc123def456)">
+            <input type="text" id="cluster" class="input" placeholder="Cluster (例如: ap1)" value="ap1">
+            <button class="btn" onclick="game.connect()">连接</button>
+        </div>
+
+        <!-- 登录 -->
+        <div id="loginSection" class="card hidden">
+            <h3>👋 欢迎来到斗地主</h3>
+            <input type="text" id="usernameInput" class="input" placeholder="输入你的昵称" maxlength="12">
+            <button class="btn" onclick="game.login()">进入游戏</button>
+        </div>
+
+        <!-- 大厅 -->
+        <div id="lobbySection" class="card hidden">
+            <h3>🏠 游戏大厅</h3>
+            <div style="margin-bottom: 15px;">
+                <button class="btn" onclick="game.createRoom()">创建房间</button>
+                <button class="btn" onclick="game.joinRoom()">加入房间</button>
+            </div>
+            <input type="text" id="roomIdInput" class="input" placeholder="输入房间号加入">
+        </div>
+
+        <!-- 房间内 -->
+        <div id="roomSection" class="card hidden">
+            <h3 id="roomTitle">房间</h3>
+            <div id="playersList" class="players"></div>
+            <div id="roomActions">
+                <button class="btn" id="readyBtn" onclick="game.toggleReady()">准备</button>
+                <button class="btn" id="startBtn" onclick="game.startGame()" style="display:none;">开始游戏</button>
+                <button class="btn" onclick="game.leaveRoom()">离开房间</button>
+            </div>
+            <div id="messages" style="margin-top: 20px; max-height: 150px; overflow-y: auto;"></div>
+            <div style="display: flex; gap: 10px; margin-top: 10px;">
+                <input type="text" id="messageInput" class="input" placeholder="发送消息..." style="margin-bottom: 0;">
+                <button class="btn" onclick="game.sendMessage()">发送</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 游戏状态
+        const game = {
+            pusher: null,
+            channel: null,
+            username: '',
+            playerId: '',
+            roomId: '',
+            isHost: false,
+            isReady: false,
+            players: [],
+            
+            // 连接 Pusher
+            connect() {
+                const appKey = document.getElementById('appKey').value.trim();
+                const cluster = document.getElementById('cluster').value.trim() || 'ap1';
+                
+                if (!appKey) {
+                    alert('请输入 App Key');
+                    return;
+                }
+                
+                try {
+                    this.pusher = new Pusher(appKey, {
+                        cluster: cluster,
+                        forceTLS: true
+                    });
+                    
+                    this.pusher.connection.bind('connected', () => {
+                        document.getElementById('statusDot').classList.remove('disconnected');
+                        document.getElementById('statusText').textContent = '已连接';
+                        document.getElementById('configSection').classList.add('hidden');
+                        document.getElementById('loginSection').classList.remove('hidden');
+                    });
+                    
+                    this.pusher.connection.bind('disconnected', () => {
+                        document.getElementById('statusDot').classList.add('disconnected');
+                        document.getElementById('statusText').textContent = '已断开';
+                    });
+                    
+                    this.pusher.connection.bind('error', (err) => {
+                        console.error('Pusher 错误:', err);
+                        alert('连接失败，请检查 App Key 是否正确');
+                    });
+                    
+                } catch (error) {
+                    alert('连接失败: ' + error.message);
+                }
+            },
+            
+            // 登录
+            login() {
+                const username = document.getElementById('usernameInput').value.trim();
+                if (!username) {
+                    alert('请输入昵称');
+                    return;
+                }
+                
+                this.username = username;
+                this.playerId = 'user_' + Date.now();
+                
+                document.getElementById('loginSection').classList.add('hidden');
+                document.getElementById('lobbySection').classList.remove('hidden');
+                document.getElementById('playerInfo').textContent = `玩家: ${username}`;
+            },
+            
+            // 创建房间
+            createRoom() {
+                this.roomId = 'room_' + Math.random().toString(36).substring(2, 8).toUpperCase();
+                this.isHost = true;
+                this.joinChannel();
+            },
+            
+            // 加入房间
+            joinRoom() {
+                const roomId = document.getElementById('roomIdInput').value.trim();
+                if (!roomId) {
+                    alert('请输入房间号');
+                    return;
+                }
+                
+                this.roomId = roomId.startsWith('room_') ? roomId : 'room_' + roomId;
+                this.isHost = false;
+                this.joinChannel();
+            },
+            
+            // 加入频道
+            joinChannel() {
+                this.channel = this.pusher.subscribe(this.roomId);
+                
+                this.channel.bind('pusher:subscription_succeeded', () => {
+                    this.enterRoom();
+                    
+                    // 通知其他玩家加入
+                    this.channel.trigger('client-join', {
+                        playerId: this.playerId,
+                        username: this.username,
+                        isHost: this.isHost
+                    });
+                });
+                
+                // 监听玩家加入
+                this.channel.bind('client-join', (data) => {
+                    if (data.playerId !== this.playerId) {
+                        this.players.push(data);
+                        this.updatePlayers();
+                        this.addMessage(`${data.username} 加入了房间`);
+                    }
+                });
+                
+                // 监听准备状态
+                this.channel.bind('client-ready', (data) => {
+                    const player = this.players.find(p => p.playerId === data.playerId);
+                    if (player) {
+                        player.ready = data.ready;
+                        this.updatePlayers();
+                    }
+                });
+                
+                // 监听游戏开始
+                this.channel.bind('client-start', () => {
+                    this.addMessage('游戏开始！');
+                    document.getElementById('gameArea').style.display = 'block';
+                });
+                
+                // 监听消息
+                this.channel.bind('client-message', (data) => {
+                    this.addMessage(`${data.username}: ${data.message}`);
+                });
+                
+                // 监听玩家离开
+                this.channel.bind('client-leave', (data) => {
+                    this.players = this.players.filter(p => p.playerId !== data.playerId);
+                    this.updatePlayers();
+                    this.addMessage(`${data.username} 离开了房间`);
+                });
+            },
+            
+            // 进入房间
+            enterRoom() {
+                document.getElementById('lobbySection').classList.add('hidden');
+                document.getElementById('roomSection').classList.remove('hidden');
+                document.getElementById('roomTitle').textContent = `房间: ${this.roomId}`;
+                
+                // 添加自己到玩家列表
+                this.players = [{
+                    playerId: this.playerId,
+                    username: this.username,
+                    isHost: this.isHost,
+                    ready: false
+                }];
+                
+                this.updatePlayers();
+                this.addMessage('你进入了房间');
+            },
+            
+            // 更新玩家列表
+            updatePlayers() {
+                const container = document.getElementById('playersList');
+                container.innerHTML = this.players.map(player => `
+                    <div class="player ${player.ready ? 'ready' : ''}">
+                        <div>${player.username} ${player.playerId === this.playerId ? '(你)' : ''}</div>
+                        <div style="font-size: 12px;">
+                            ${player.isHost ? '👑 房主' : ''}
+                            ${player.ready ? '✅ 已准备' : '⏳ 未准备'}
+                        </div>
+                    </div>
+                `).join('');
+                
+                // 更新按钮
+                const readyBtn = document.getElementById('readyBtn');
+                const startBtn = document.getElementById('startBtn');
+                
+                if (this.isHost) {
+                    readyBtn.style.display = 'none';
+                    startBtn.style.display = 'inline-block';
+                    startBtn.disabled = this.players.length < 2 || !this.players.every(p => p.ready || p.isHost);
+                } else {
+                    readyBtn.style.display = 'inline-block';
+                    readyBtn.textContent = this.isReady ? '取消准备' : '准备';
+                    startBtn.style.display = 'none';
+                }
+            },
+            
+            // 切换准备
+            toggleReady() {
+                this.isReady = !this.isReady;
+                this.channel.trigger('client-ready', {
+                    playerId: this.playerId,
+                    ready: this.isReady
+                });
+                
+                const me = this.players.find(p => p.playerId === this.playerId);
+                if (me) me.ready = this.isReady;
+                this.updatePlayers();
+            },
+            
+            // 开始游戏
+            startGame() {
+                this.channel.trigger('client-start', {});
+                this.addMessage('游戏开始！');
+            },
+            
+            // 离开房间
+            leaveRoom() {
+                this.channel.trigger('client-leave', {
+                    playerId: this.playerId,
+                    username: this.username
+                });
+                
+                this.pusher.unsubscribe(this.roomId);
+                this.channel = null;
+                this.roomId = '';
+                this.players = [];
+                this.isHost = false;
+                this.isReady = false;
+                
+                document.getElementById('roomSection').classList.add('hidden');
+                document.getElementById('lobbySection').classList.remove('hidden');
+            },
+            
+            // 发送消息
+            sendMessage() {
+                const input = document.getElementById('messageInput');
+                const message = input.value.trim();
+                
+                if (!message) return;
+                
+                this.channel.trigger('client-message', {
+                    username: this.username,
+                    message: message
+                });
+                
+                this.addMessage(`${this.username}: ${message}`);
+                input.value = '';
+            },
+            
+            // 添加消息
+            addMessage(text) {
+                const container = document.getElementById('messages');
+                const div = document.createElement('div');
+                div.style.padding = '5px 0';
+                div.style.borderBottom = '1px solid rgba(255,255,255,0.1)';
+                div.textContent = `[${new Date().toLocaleTimeString()}] ${text}`;
+                container.appendChild(div);
+                container.scrollTop = container.scrollHeight;
+            },
+            
+            // 初始化
+            init() {
+                document.getElementById('messageInput')?.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        this.sendMessage();
+                    }
+                });
+            }
+        };
+        
+        game.init();
+    </script>
+</body>
+</html>
