@@ -1,0 +1,15 @@
+{
+  "name": "chinese-games-vercel",
+  "version": "1.0.0",
+  "description": "在线斗地主 - Vercel HTTP轮询版",
+  "scripts": {
+    "dev": "vercel dev",
+    "deploy": "vercel --prod"
+  },
+  "dependencies": {
+    "@vercel/kv": "^1.0.0"
+  },
+  "devDependencies": {
+    "vercel": "^33.0.0"
+  }
+}
