@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: chinese-games-online
+    env: node
+    buildCommand: npm install
+    startCommand: node server/index.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+    plan: free
+    healthCheckPath: /
+    autoDeploy: true

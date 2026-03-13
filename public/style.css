@@ -1,0 +1,753 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    background: linear-gradient(135deg, #1a5f1a 0%, #2d8a2d 50%, #1a5f1a 100%);
+    min-height: 100vh;
+    color: #333;
+}
+
+.page {
+    width: 100%;
+    min-height: 100vh;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* 按钮样式 */
+.btn-primary {
+    background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 25px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+    transition: all 0.3s;
+    box-shadow: 0 4px 15px rgba(255, 107, 53, 0.4);
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255, 107, 53, 0.5);
+}
+
+.btn-secondary {
+    background: linear-gradient(135deg, #6c757d 0%, #868e96 100%);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 25px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: all 0.3s;
+}
+
+.btn-secondary:hover {
+    transform: translateY(-2px);
+    opacity: 0.9;
+}
+
+.btn-small {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    padding: 6px 12px;
+    border-radius: 15px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.3s;
+}
+
+.btn-small:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* 登录页面 */
+#loginPage {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+}
+
+.login-container {
+    background: rgba(255, 255, 255, 0.95);
+    padding: 50px;
+    border-radius: 20px;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    max-width: 400px;
+    width: 90%;
+}
+
+.login-container h1 {
+    font-size: 42px;
+    margin-bottom: 30px;
+    color: #1a5f1a;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.login-form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.login-form input {
+    padding: 15px 20px;
+    border: 2px solid #ddd;
+    border-radius: 25px;
+    font-size: 16px;
+    text-align: center;
+    transition: border-color 0.3s;
+}
+
+.login-form input:focus {
+    outline: none;
+    border-color: #ff6b35;
+}
+
+.hint {
+    margin-top: 20px;
+    color: #666;
+    font-size: 14px;
+}
+
+/* 大厅页面 */
+#lobbyPage {
+    padding: 20px;
+}
+
+.lobby-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 15px 25px;
+    border-radius: 15px;
+    margin-bottom: 20px;
+}
+
+.lobby-header h2 {
+    color: #ffd700;
+    font-size: 28px;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.user-info span {
+    color: white;
+    font-weight: bold;
+}
+
+.lobby-content {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 20px;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid rgba(255, 215, 0, 0.3);
+}
+
+.section-header h3 {
+    color: #ffd700;
+    font-size: 20px;
+}
+
+/* 房间列表 */
+.rooms-section, .users-section {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 15px;
+    padding: 20px;
+    max-height: calc(100vh - 150px);
+    overflow-y: auto;
+}
+
+.rooms-list, .users-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.room-item {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    padding: 15px;
+    border-radius: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.3s;
+    border: 2px solid transparent;
+}
+
+.room-item:hover {
+    border-color: #ff6b35;
+    transform: translateX(5px);
+}
+
+.room-info h4 {
+    color: #333;
+    margin-bottom: 5px;
+}
+
+.room-info p {
+    color: #666;
+    font-size: 13px;
+}
+
+.room-status {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.player-indicator {
+    display: flex;
+    gap: 3px;
+}
+
+.player-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #ddd;
+}
+
+.player-dot.active {
+    background: #28a745;
+}
+
+.empty {
+    text-align: center;
+    color: #999;
+    padding: 40px;
+}
+
+/* 在线用户 */
+.user-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 15px;
+    background: #f8f9fa;
+    border-radius: 10px;
+    transition: all 0.3s;
+}
+
+.user-item:hover {
+    background: #e9ecef;
+}
+
+.user-name {
+    font-weight: bold;
+    color: #333;
+}
+
+.user-status {
+    font-size: 12px;
+    padding: 3px 8px;
+    border-radius: 10px;
+}
+
+.user-status.idle {
+    background: #d4edda;
+    color: #155724;
+}
+
+.user-status.ingame {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.invite-btn {
+    background: #28a745;
+    color: white;
+    border: none;
+    padding: 5px 12px;
+    border-radius: 15px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.3s;
+}
+
+.invite-btn:hover {
+    background: #218838;
+}
+
+.invite-btn:disabled {
+    background: #6c757d;
+    cursor: not-allowed;
+}
+
+/* 房间页面 */
+#roomPage {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.room-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 15px 25px;
+}
+
+.room-header h3 {
+    color: #ffd700;
+    font-size: 22px;
+}
+
+#roomStatus {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    padding: 5px 15px;
+    border-radius: 15px;
+    font-size: 14px;
+}
+
+.room-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    position: relative;
+}
+
+/* 玩家座位 */
+.players-area {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 20px;
+    position: relative;
+    height: 120px;
+}
+
+.player-seat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s;
+}
+
+.player-seat.empty .player-avatar {
+    background: rgba(255, 255, 255, 0.2);
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.player-seat.empty .player-name {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.player-seat.current-turn .player-avatar {
+    border: 3px solid #ffd700;
+    box-shadow: 0 0 20px #ffd700;
+    animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+.player-avatar {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.player-name {
+    color: white;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.player-status {
+    font-size: 12px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    color: white;
+}
+
+.player-status.ready {
+    background: #28a745;
+}
+
+.player-status.landlord {
+    background: #dc3545;
+}
+
+.card-count {
+    background: rgba(0, 0, 0, 0.5);
+    color: white;
+    padding: 2px 10px;
+    border-radius: 10px;
+    font-size: 12px;
+}
+
+/* 游戏区域 */
+.game-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 200px;
+}
+
+.played-cards {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: -20px;
+    flex-wrap: wrap;
+    max-width: 600px;
+    min-height: 100px;
+}
+
+.game-message {
+    color: #ffd700;
+    font-size: 18px;
+    font-weight: bold;
+    margin-top: 20px;
+    text-align: center;
+}
+
+/* 我的手牌 */
+.my-hand-area {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 15px 15px 0 0;
+    padding: 20px;
+}
+
+.my-cards {
+    display: flex;
+    justify-content: center;
+    gap: -25px;
+    margin-bottom: 15px;
+    min-height: 120px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding: 10px;
+}
+
+.card {
+    width: 70px;
+    height: 100px;
+    background: white;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 5px;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    border: 2px solid #ddd;
+    flex-shrink: 0;
+    margin-right: -25px;
+}
+
+.card:hover {
+    transform: translateY(-20px);
+    z-index: 10;
+}
+
+.card.selected {
+    transform: translateY(-30px);
+    border-color: #ff6b35;
+    box-shadow: 0 5px 20px rgba(255, 107, 53, 0.5);
+    z-index: 10;
+}
+
+.card.red {
+    color: #dc3545;
+}
+
+.card.black {
+    color: #333;
+}
+
+.card-top {
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.card-center {
+    font-size: 28px;
+    text-align: center;
+}
+
+.card-bottom {
+    font-size: 14px;
+    font-weight: bold;
+    transform: rotate(180deg);
+}
+
+.action-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+}
+
+/* 叫地主面板 */
+.bid-panel, .play-panel {
+    position: fixed;
+    bottom: 200px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.8);
+    padding: 20px 30px;
+    border-radius: 15px;
+    text-align: center;
+    z-index: 100;
+}
+
+.bid-panel p {
+    color: white;
+    font-size: 18px;
+    margin-bottom: 15px;
+}
+
+.bid-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+.bid-btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.3s;
+}
+
+.bid-btn:not(.pass) {
+    background: linear-gradient(135deg, #ffd700 0%, #ffaa00 100%);
+    color: #333;
+}
+
+.bid-btn.pass {
+    background: linear-gradient(135deg, #6c757d 0%, #868e96 100%);
+    color: white;
+}
+
+.bid-btn:hover {
+    transform: scale(1.05);
+}
+
+/* 地主牌 */
+.landlord-cards {
+    position: fixed;
+    top: 100px;
+    right: 20px;
+    background: rgba(0, 0, 0, 0.6);
+    padding: 15px;
+    border-radius: 10px;
+    text-align: center;
+}
+
+.landlord-cards .label {
+    color: #ffd700;
+    font-weight: bold;
+    display: block;
+    margin-bottom: 10px;
+}
+
+.landlord-cards .cards {
+    display: flex;
+    gap: 5px;
+}
+
+.landlord-cards .card {
+    width: 50px;
+    height: 75px;
+    margin: 0;
+}
+
+.landlord-cards .card-top,
+.landlord-cards .card-bottom {
+    font-size: 10px;
+}
+
+.landlord-cards .card-center {
+    font-size: 18px;
+}
+
+/* 弹窗 */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: white;
+    padding: 30px;
+    border-radius: 20px;
+    text-align: center;
+    max-width: 400px;
+    width: 90%;
+    animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateY(-50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.modal-content h4 {
+    margin-bottom: 20px;
+    color: #333;
+    font-size: 24px;
+}
+
+.modal-content p {
+    color: #666;
+    margin-bottom: 20px;
+}
+
+.modal-content input {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #ddd;
+    border-radius: 10px;
+    font-size: 16px;
+    margin-bottom: 20px;
+}
+
+.modal-content input:focus {
+    outline: none;
+    border-color: #ff6b35;
+}
+
+.modal-buttons {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+}
+
+/* 游戏结束结算 */
+.score-board {
+    margin: 20px 0;
+}
+
+.score-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px;
+    margin: 5px 0;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+.score-item.winner {
+    background: #d4edda;
+    border: 2px solid #28a745;
+}
+
+.score-item.landlord::before {
+    content: '👑 ';
+}
+
+.score-positive {
+    color: #28a745;
+    font-weight: bold;
+}
+
+.score-negative {
+    color: #dc3545;
+    font-weight: bold;
+}
+
+/* 响应式 */
+@media (max-width: 900px) {
+    .lobby-content {
+        grid-template-columns: 1fr;
+    }
+    
+    .players-area {
+        height: auto;
+        flex-direction: column;
+        gap: 20px;
+    }
+    
+    .card {
+        width: 55px;
+        height: 80px;
+    }
+    
+    .card-center {
+        font-size: 20px;
+    }
+}
+
+/* 动画 */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.fade-in {
+    animation: fadeIn 0.5s ease;
+}
+
+.slide-up {
+    animation: slideUp 0.5s ease;
+}

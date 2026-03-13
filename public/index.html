@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎴 欢乐斗地主</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- 注册页面 -->
+    <div id="loginPage" class="page">
+        <div class="login-container">
+            <h1>🎴 欢乐斗地主</h1>
+            <div class="login-form">
+                <input type="text" id="usernameInput" placeholder="请输入您的用户名" maxlength="12">
+                <button id="registerBtn" class="btn-primary">进入游戏</button>
+            </div>
+            <p class="hint">输入用户名即可开始游戏，邀请好友一起斗地主！</p>
+        </div>
+    </div>
+
+    <!-- 大厅页面 -->
+    <div id="lobbyPage" class="page hidden">
+        <div class="lobby-header">
+            <h2>🎴 欢乐斗地主</h2>
+            <div class="user-info">
+                <span id="currentUser">玩家</span>
+                <button id="logoutBtn" class="btn-small">退出</button>
+            </div>
+        </div>
+
+        <div class="lobby-content">
+            <!-- 左侧：房间列表 -->
+            <div class="rooms-section">
+                <div class="section-header">
+                    <h3>🏠 游戏房间</h3>
+                    <button id="createRoomBtn" class="btn-primary">创建房间</button>
+                </div>
+                <div id="roomsList" class="rooms-list">
+                    <p class="empty">暂无可用房间，创建一个吧！</p>
+                </div>
+            </div>
+
+            <!-- 右侧：在线用户 -->
+            <div class="users-section">
+                <div class="section-header">
+                    <h3>👥 在线好友</h3>
+                    <button id="refreshUsersBtn" class="btn-small">刷新</button>
+                </div>
+                <div id="onlineUsersList" class="users-list">
+                    <p class="empty">暂无其他在线用户</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 房间页面 -->
+    <div id="roomPage" class="page hidden">
+        <div class="room-header">
+            <button id="leaveRoomBtn" class="btn-small">← 离开房间</button>
+            <h3 id="roomName">房间名称</h3>
+            <span id="roomStatus">等待中</span>
+        </div>
+
+        <div class="room-content">
+            <!-- 玩家座位 -->
+            <div class="players-area">
+                <div id="playerTop" class="player-seat empty">
+                    <div class="player-avatar">?</div>
+                    <div class="player-name">等待玩家</div>
+                    <div class="player-status"></div>
+                    <div class="card-count"></div>
+                </div>
+                <div id="playerLeft" class="player-seat empty">
+                    <div class="player-avatar">?</div>
+                    <div class="player-name">等待玩家</div>
+                    <div class="player-status"></div>
+                    <div class="card-count"></div>
+                </div>
+                <div id="playerRight" class="player-seat empty">
+                    <div class="player-avatar">?</div>
+                    <div class="player-name">等待玩家</div>
+                    <div class="player-status"></div>
+                    <div class="card-count"></div>
+                </div>
+            </div>
+
+            <!-- 游戏区域 -->
+            <div class="game-area">
+                <div id="playedCards" class="played-cards"></div>
+                <div id="gameMessage" class="game-message"></div>
+            </div>
+
+            <!-- 我的手牌 -->
+            <div class="my-hand-area">
+                <div id="myCards" class="my-cards"></div>
+                <div id="myActions" class="action-buttons">
+                    <button id="readyBtn" class="btn-primary">准备</button>
+                    <button id="unreadyBtn" class="btn-secondary hidden">取消准备</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 叫地主面板 -->
+        <div id="bidPanel" class="bid-panel hidden">
+            <p>是否叫地主？</p>
+            <div class="bid-buttons">
+                <button class="bid-btn" data-score="1">1分</button>
+                <button class="bid-btn" data-score="2">2分</button>
+                <button class="bid-btn" data-score="3">3分</button>
+                <button class="bid-btn pass" data-score="0">不叫</button>
+            </div>
+        </div>
+
+        <!-- 出牌面板 -->
+        <div id="playPanel" class="play-panel hidden">
+            <button id="playCardsBtn" class="btn-primary">出牌</button>
+            <button id="passBtn" class="btn-secondary">不出</button>
+            <button id="hintBtn" class="btn-small">提示</button>
+        </div>
+
+        <!-- 地主牌显示 -->
+        <div id="landlordCards" class="landlord-cards hidden">
+            <span class="label">底牌</span>
+            <div class="cards"></div>
+        </div>
+    </div>
+
+    <!-- 邀请弹窗 -->
+    <div id="inviteModal" class="modal hidden">
+        <div class="modal-content">
+            <h4>收到邀请</h4>
+            <p id="inviteMessage"></p>
+            <div class="modal-buttons">
+                <button id="acceptInviteBtn" class="btn-primary">接受</button>
+                <button id="rejectInviteBtn" class="btn-secondary">拒绝</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 游戏结束弹窗 -->
+    <div id="gameEndModal" class="modal hidden">
+        <div class="modal-content">
+            <h4>游戏结束</h4>
+            <div id="gameEndContent"></div>
+            <div class="modal-buttons">
+                <button id="playAgainBtn" class="btn-primary">再来一局</button>
+                <button id="backToLobbyBtn" class="btn-secondary">返回大厅</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 创建房间弹窗 -->
+    <div id="createRoomModal" class="modal hidden">
+        <div class="modal-content">
+            <h4>创建房间</h4>
+            <input type="text" id="roomNameInput" placeholder="房间名称（可选）">
+            <div class="modal-buttons">
+                <button id="confirmCreateRoomBtn" class="btn-primary">创建</button>
+                <button id="cancelCreateRoomBtn" class="btn-secondary">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

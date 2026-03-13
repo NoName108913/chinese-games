@@ -1,0 +1,18 @@
+{
+  "name": "chinese-games-online",
+  "version": "1.0.0",
+  "description": "在线中国象棋和斗地主 - 联机版",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "nodemon server/index.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "socket.io": "^4.6.1",
+    "cors": "^2.8.5"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
